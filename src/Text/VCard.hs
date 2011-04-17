@@ -36,7 +36,9 @@ data VCardProperty =
     -- | A photo of the VCard entity. E.g.,
     --
     -- > Photo (URI "http://accentuate.us/smedia/images/michael.jpg")
-    | Photo             Data
+    | Photo             { phtType   :: Maybe String -- ^ Registered IANA format
+                        , phtData   :: Data
+                        }
     -- | Specifies the birth date of the VCard entity. E.g.,
     --
     -- > Birthday $ UTCTime (fromGregorian 1991 10 14) (secondsToDiffTime 0)
@@ -103,7 +105,9 @@ data VCardProperty =
     -- their organization. E.g.,
     --
     -- > Photo (URI "http://spearheaddev.com/smedia/images/logo-trans.png")
-    | Logo              Data
+    | Logo              { lgoType   :: Maybe String -- ^ Registered IANA format
+                        , lgoData   :: Data
+                        }
     -- | Indicates the vCard of an assistant or area administrator who is
     -- typically separately addressable. E.g.,
     --
@@ -152,7 +156,7 @@ data VCardProperty =
     --
     -- > Sound  "BASIC"
     -- >        (URI "CID:JOHNQPUBLIC.part8.19960229T080000.xyzMail@host1.com")
-    | Sound             { sndType   :: String -- ^ Registered IANA format
+    | Sound             { sndType   :: Maybe String -- ^ Registered IANA format
                         , sndData   :: Data
                         }
     -- | A value to uniquely identify the vCard. Please note well that this
@@ -174,7 +178,7 @@ data VCardProperty =
     -- the vCard entity. E.g.,
     --
     -- > Key "x509" (Binary "dGhpcyBjb3VsZCBiZSAKbXkgY2VydGlmaWNhdGUK")
-    | Key               { keyType   :: String -- ^ Registered IANA format
+    | Key               { keyType   :: Maybe String -- ^ Registered IANA format
                         , keyData   :: Data
                         }
 
@@ -208,7 +212,7 @@ instance Show VCard where
 instance Show VCardProperty where
     show (CommonName fn)    = "FN:" ++ escape fn
     show (Nickname nn)      = "NICKNAME:" ++ (intercalate "," . map escape) nn
-    show (Photo d)          = "PHOTO;" ++ show d
+    show (Photo t d)        = "PHOTO" ++ showType t ++ show d
     show (Birthday bd)      = "BDAY:" ++ fmtTime "%Y-%m-%d" bd
     show (Address ts po e s l r ps c) = "ADR;" ++ ts' ++ vps
         where   ts' = showTypes . map show $ ts
@@ -226,7 +230,7 @@ instance Show VCardProperty where
     show (Geo (lat,lon))    = "GEO:" ++ intercalate ";" [show lat, show lon]
     show (Title t)          = "TITLE:" ++ escape t
     show (Role r)           = "ROLE:" ++ escape r
-    show (Logo d)           = "LOGO:" ++ show d
+    show (Logo t d)         = "LOGO" ++ showType t ++ show d
     show (Agent a)          = "AGENT:" ++ (escape . show) a
     show (Organization os)  = "ORG:" ++ (intercalate ";" . map escape) os
     show (Categories cs)    = "CATEGORIES:" ++ (intercalate "," . map escape) cs
@@ -234,11 +238,11 @@ instance Show VCardProperty where
     show (ProductId pid)    = "PRODID:" ++ escape pid
     show (Revision r)       = "REV:" ++ fmtTime "%Y-%m-%d" r
     show (SortString s)     = "SORT-STRING:" ++ escape s
-    show (Sound st s)       = "SOUND;TYPE=" ++ escape st ++ ";" ++ show s
+    show (Sound t s)        = "SOUND" ++ showType t ++ show s
     show (UID u)            = "UID:" ++ escape u
     show (URL u)            = "URL:" ++ escape u
     show (Class c)          = "CLASS:" ++ show c
-    show (Key kt k)         = "KEY;TYPE=" ++ escape kt ++ ";" ++ show k
+    show (Key t k)          = "KEY" ++ showType t ++ show k
     show (IndividualNames fn) = "N:" ++ (intercalate ";" . map escape) fn
 
 instance Show AddrType where
@@ -283,6 +287,11 @@ instance Show Class where
     show ClassPublic        = "PUBLIC"
     show ClassPrivate       = "PRIVATE"
     show ClassConfidential  = "CONFIDENTIAL"
+
+-- | Output RFC 2426-compliant TYPE argument when it is just a singleton
+showType         :: Maybe String -> String
+showType Nothing  = ";"
+showType (Just t) = ";TYPE=" ++ escape t ++ ";"
 
 -- | Output RFC 2426-compliant TYPE arguments read for a given vCard line.
 showTypes   :: [String] -> String
