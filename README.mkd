@@ -1,0 +1,8 @@
+Copyright (c) 2011 [Spearhead Development, L.L.C.](http://spearheaddev.com/).
+
+Released under the BSD3 License. Please see the included `LICENSE` file.
+
+Introduction
+============
+This project was created by [Spearhead Development](http://spearheaddev.com/) to
+implement the [RFC 2426](http://www.ietf.org/rfc/rfc2426.txt) spec.
