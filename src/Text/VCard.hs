@@ -104,7 +104,7 @@ data VCardProperty =
     -- | An image of the vCard entity's logo. This would typically relate to
     -- their organization. E.g.,
     --
-    -- > Photo (URI "http://spearheaddev.com/smedia/images/logo-trans.png")
+    -- > Logo (URI "http://spearheaddev.com/smedia/images/logo-trans.png")
     | Logo              { lgoType   :: Maybe String -- ^ Registered IANA format
                         , lgoData   :: Data
                         }
