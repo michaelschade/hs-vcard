@@ -2,7 +2,7 @@ module Text.VCard
     ( -- $doc
       VCard(..)
     , CommonName
-    , IndividualNames
+    , IndividualNames(..)
     , VCardProperty(..)
     , AddrType(..)
     , TelType(..)
@@ -26,11 +26,17 @@ data VCard = VCard CommonName IndividualNames [VCardProperty]
 -- > CommonName "Mr. Michael A. F. Schade"
 type CommonName = String
 
--- | A list of values corresponding, in sequence, to Family Name, Given
--- Name, Additional Names, Honorific Prefixes, and Honorific Suffixes. E.g.,
+-- | A breakdown of the vCard entity's name, corresponding, in sequence, to
+-- Family Name, Given Name, Additional Names, Honorific Prefixes, and Honorific
+-- Suffixes. E.g.,
 --
--- > IndividualNames ["Schade", "Michael", "Anthony", "Fanetti", "Mr."]
-type IndividualNames = [String]
+-- > IndividualNames ["Schade"] ["Michael"] ["Anthony", "Fanetti"] [] ["Esq."]
+data IndividualNames =  IndividualNames { familyName        :: [String]
+                                        , givenName         :: [String]
+                                        , additionalNames   :: [String]
+                                        , honorificPrefixes :: [String]
+                                        , honorificSuffixes :: [String]
+                                        }
 
 data VCardProperty =
     -- | A list of nicknames belonging to the VCard entity. E.g.,
@@ -213,8 +219,13 @@ instance Show VCard where
         intercalate "\n" ["BEGIN:vCard", "VERSION:3.0", vps', "END:vCard"]
         where vps' = intercalate "\n" $
                 [ "FN:" ++ escape fn
-                , "N:" ++ (intercalate ";" . map escape) ns
+                , show ns
                 ] ++ map show vps
+
+instance Show IndividualNames where
+    show (IndividualNames fn gn an hp hs) =
+        ("N:" ++) . intercalate ";" . map (escape . sep) $ [fn, gn, an, hp, hs]
+        where sep = intercalate ","
 
 instance Show VCardProperty where
     show (Nickname nn)      = "NICKNAME:" ++ (intercalate "," . map escape) nn
@@ -323,17 +334,18 @@ escape (x:xs)
 -- Its usage is fairly simple and intuitive. For example, below is how one
 -- would produce a VCard for Frank Dawson, one of the RFC 2426 authors:
 --
--- > VCard   [ CommonName "Frank Dawson"
--- >         , Organization ["Lotus Development Corporation"]
--- >         , Address [AddrWork, AddrPostal, AddrParcel] "" ""
--- >                     "6544 Battleford Drive"
--- >                     "Raleigh" "NC" "27613-3502" "U.S.A"
--- >         , Telephone [TelVoice, TelMessage, TelWork] "+1-919-676-9515"
--- >         , Telephone [TelFax, TelWork] "+1-919-676-9564"
--- >         , Email [EmailInternet, EmailPreferred] "Frank_Dawson@Lotus.com"
--- >         , Email [EmailInternet] "fdawson@earthlink.net"
--- >         , URL "http://home.earthlink.net/~fdawson"
--- >         ]
+-- > VCard  "Frank Dawson"
+-- >        (IndividualNames ["Dawson"] ["Frank"] [] [] [])
+-- >        [ Organization ["Lotus Development Corporation"]
+-- >        , Address [AddrWork, AddrPostal, AddrParcel] "" ""
+-- >                    "6544 Battleford Drive"
+-- >                    "Raleigh" "NC" "27613-3502" "U.S.A"
+-- >        , Telephone [TelVoice, TelMessage, TelWork] "+1-919-676-9515"
+-- >        , Telephone [TelFax, TelWork] "+1-919-676-9564"
+-- >        , Email [EmailInternet, EmailPreferred] "Frank_Dawson@Lotus.com"
+-- >        , Email [EmailInternet] "fdawson@earthlink.net"
+-- >        , URL "http://home.earthlink.net/~fdawson"
+-- >        ]
 --
 -- Although this package is fairly well documented, even with general
 -- explanations about the various VCard properties, RFC 2426 should be
